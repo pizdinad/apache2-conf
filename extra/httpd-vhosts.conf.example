@@ -1,0 +1,240 @@
+# https://httpd.apache.org/docs/2.4/vhosts/  ;  https://httpd.apache.org/docs/2.4/mod/core.html#virtualhost
+# Описание: содержит директивы, которые применяются только к определенному имени хоста или IP-адресу
+# Syntax: <VirtualHost addr[:port] [addr[:port]] ...> ... </VirtualHost>
+# Context: server config
+
+<VirtualHost *:80>
+#SuexecUserGroup ubuntu ubuntu
+DocumentRoot "/usr/local/apache2/htdocs/localhost"
+ServerName localhost.fedoss.ru
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/core.html#filesmatch
+# Description: Содержит директивы, которые применяются к именам, сопоставленным с регулярным выражением
+# Syntax:   <FilesMatch regex> ... </FilesMatch>
+# Context:  server config, virtual host, directory, .htaccess
+
+<FilesMatch "\.php$">
+# https://httpd.apache.org/docs/2.4/mod/core.html#sethandler
+# Description: директива заставляет все соответствующие файлы обрабатываться через обработчик, заданный именем обработчика.
+# Syntax:   SetHandler handler-name|none|expression
+# Context:  server config, virtual host, directory, .htaccess
+SetHandler fcgid-script
+</FilesMatch>
+
+
+
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidbusytimeout
+# Description: Это максимальный срок для обработки запросов. Если запрос FastCGI не завершается в течение секунд FcgidBusyTimeout, он будет расторгнут. Поскольку проверка выполняется в интервале, определенном FcgidBusyScanInterval, обработка запроса может быть продолжена в течение более длительного периода времени.
+# Syntax:   FcgidBusyTimeout seconds
+# Default:  FcgidBusyTimeout 300
+# Context:  server config, virtual host
+FcgidBusyTimeout 3600
+
+
+
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidiotimeout
+# Description: Это максимальный период времени, ожидаемый модулем при попытке чтения или записи в приложение FastCGI.
+# Заметка
+# Приложение FastCGI должно начать генерировать ответ в течение этого периода времени. При необходимости увеличьте эту директиву для обработки приложений, на которые требуется относительно длительный период времени. Этот параметр применяется ко всем приложениям, созданным для этого сервера или виртуального хоста. Используйте FcgidCmdOptions, чтобы применить этот параметр к одному приложению.
+# Syntax:   FcgidIOTimeout seconds
+# Default:  FcgidIOTimeout 40
+# Context:  server config, virtual host
+FcgidIOTimeout 600
+
+<Directory /usr/local/apache2/htdocs/localhost>
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidwrapper
+# Description:  The CGI wrapper setting. Приложения PHP обычно настраиваются с использованием директивы FcgidWrapper и соответствующего сценария оболочки. Скрипт-оболочка может быть подходящим местом для определения любых переменных среды, требуемых приложением, таких как PHP_FCGI_MAX_REQUESTS или что-то еще. (Переменные среды также могут быть установлены с помощью FcgidInitialEnv, но затем применяются ко всем приложениям.)
+# Syntax:   FcgidWrapper command [ suffix ] [ virtual ]
+# Default:  none
+# Context:  server config, virtual host, directory, .htaccess
+FcgidWrapper /usr/local/apache2/htdocs/localhost/php-wrapper .php
+</Directory>
+
+</VirtualHost>
+
+##############################################################################
+
+# <VirtualHost *:80>
+# DocumentRoot "/usr/local/apache2/htdocs/fedoss.ru/public"
+# ServerName fedoss.ru
+
+# RewriteEngine On
+# RewriteCond "%{HTTPS}" "!=on"
+# RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
+# </VirtualHost>
+
+##############################################################################
+
+<VirtualHost *:80 *:443>
+
+DocumentRoot "/usr/local/apache2/htdocs/fedoss.ru/public"
+ServerName fedoss.ru
+
+
+# RewriteEngine On
+# RewriteCond "%{HTTPS}" "!=on"
+# RewriteRule ^/?(.*)$ https://%{SERVER_NAME}/$1 [R,L]
+
+
+
+# https://www.reg.ru/support/ssl-sertifikaty/ustanovka-ssl-sertifikata/ustanovka-SSL-sertifikata-na-apache
+
+#   SSL Engine Switch:
+#   Enable/Disable SSL for this virtual host.
+SSLEngine on
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcertificatefile
+# Description: Server PEM-encoded X.509 certificate data file. (путь до сертификата *.crt)
+# Syntax:	SSLCertificateFile file-path
+# Context:	server config, virtual host
+
+# SSLCertificateFile	/etc/ssl/certs/ssl-cert-snakeoil.pem
+SSLCertificateFile "/usr/local/apache2/ssl.crt/fedoss.ru/domain_name.crt"
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcertificatekeyfile
+# Description:	Server PEM-encoded private key file
+# Syntax:	SSLCertificateKeyFile file-path
+# Context:	server config, virtual host
+
+# SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+SSLCertificateKeyFile "/usr/local/apache2/ssl.crt/fedoss.ru/private.key"
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcertificatechainfile
+# Description:	устарел с версией 2.4.8 - устанавливает дополнительный файл «все-в-одном»
+# Syntax:	SSLCertificateChainFile file-path
+# Context:	server config, virtual host
+
+SSLCertificateChainFile /usr/local/apache2/ssl.crt/fedoss.ru/chain.crt
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcacertificatepath
+# Description: устанавливает каталог, в котором вы храните сертификаты центров сертификации (ЦС), с которыми вы работаете. Они используются для проверки сертификата клиента на аутентификацию клиента.
+# Syntax:	SSLCACertificatePath directory-path
+# Context:	server config, virtual host
+
+#SSLCACertificatePath /etc/ssl/certs/
+#SSLCACertificateFile /etc/apache2/ssl.crt/ca-bundle.crt
+
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslcarevocationpath
+# Описание: устанавливает каталог, в котором хранятся списки отзыва(анулированные) сертификатов (CRL) сертификационных центров (ЦС), с которыми вы имеете дело.
+# Context: server config, virtual host
+# Syntax: SSLCARevocationPath directory-path
+#SSLCARevocationPath /etc/apache2/ssl.crl/
+#SSLCARevocationFile /etc/apache2/ssl.crl/ca-bundle.crl
+
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslverifyclient
+# Описание: устанавливает уровень проверки сертификата для аутентификации клиента
+# Context: server config, virtual host, directory, .htaccess
+# Default: SSLVerifyClient none
+# Syntax: SSLVerifyClient level
+
+#SSLVerifyClient require
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslverifydepth
+#SSLVerifyDepth  10
+
+
+
+
+
+# https://httpd.apache.org/docs/2.4/mod/core.html#filesmatch
+# Description: Содержит директивы, которые применяются к именам, сопоставленным с регулярным выражением
+# Syntax:   <FilesMatch regex> ... </FilesMatch>
+# Context:  server config, virtual host, directory, .htaccess
+
+<FilesMatch "\.php$">
+
+# https://httpd.apache.org/docs/2.4/mod/mod_ssl.html#ssloptions
+# Описание: для управления различными параметрами времени выполнения для каждого каталога.
+# options:
+# StdEnvVars - Когда этот параметр включен, создается стандартный набор связанных с SSL CGI / SSI переменных среды. Это по умолчанию отключено по соображениям производительности, потому что шаг извлечения информации - довольно дорогостоящая операция. Таким образом, обычно используется эта опция только для запросов CGI и SSI.
+#
+# Context: server config, virtual host, directory, .htaccess
+# Syntax: SSLOptions [+|-]option ...
+
+# SSLOptions +StdEnvVars
+
+
+# https://httpd.apache.org/docs/2.4/mod/core.html#sethandler
+# Description: директива заставляет все соответствующие файлы обрабатываться через обработчик, заданный именем обработчика.
+# Syntax:   SetHandler handler-name|none|expression
+# Context:  server config, virtual host, directory, .htaccess
+SetHandler fcgid-script
+</FilesMatch>
+
+
+
+
+
+
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidbusytimeout
+# Description: Это максимальный срок для обработки запросов. Если запрос FastCGI не завершается в течение секунд FcgidBusyTimeout, он будет расторгнут. Поскольку проверка выполняется в интервале, определенном FcgidBusyScanInterval, обработка запроса может быть продолжена в течение более длительного периода времени.
+# Syntax:   FcgidBusyTimeout seconds
+# Default:  FcgidBusyTimeout 300
+# Context:  server config, virtual host
+FcgidBusyTimeout 3600
+
+
+
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidiotimeout
+# Description: Это максимальный период времени, ожидаемый модулем при попытке чтения или записи в приложение FastCGI.
+# Заметка
+# Приложение FastCGI должно начать генерировать ответ в течение этого периода времени. При необходимости увеличьте эту директиву для обработки приложений, на которые требуется относительно длительный период времени. Этот параметр применяется ко всем приложениям, созданным для этого сервера или виртуального хоста. Используйте FcgidCmdOptions, чтобы применить этот параметр к одному приложению.
+# Syntax:   FcgidIOTimeout seconds
+# Default:  FcgidIOTimeout 40
+# Context:  server config, virtual host
+FcgidIOTimeout 600
+
+<Directory /usr/local/apache2/htdocs/fedoss.ru/public>
+# https://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html#fcgidwrapper
+# Description:  The CGI wrapper setting. Приложения PHP обычно настраиваются с использованием директивы FcgidWrapper и соответствующего сценария оболочки. Скрипт-оболочка может быть подходящим местом для определения любых переменных среды, требуемых приложением, таких как PHP_FCGI_MAX_REQUESTS или что-то еще. (Переменные среды также могут быть установлены с помощью FcgidInitialEnv, но затем применяются ко всем приложениям.)
+# Syntax:   FcgidWrapper command [ suffix ] [ virtual ]
+# Default:  none
+# Context:  server config, virtual host, directory, .htaccess
+FcgidWrapper /usr/local/apache2/htdocs/fedoss.ru/public/php-wrapper .php
+</Directory>
+
+</VirtualHost>
+
+##############################################################################
+
+<VirtualHost *:80>
+DocumentRoot "/usr/local/apache2/htdocs/bj.fedoss.ru/public"
+ServerName bj.fedoss.ru
+<FilesMatch "\.php$">
+SetHandler fcgid-script
+</FilesMatch>
+FcgidBusyTimeout 3600
+FcgidIOTimeout 600
+<Directory /usr/local/apache2/htdocs/bj.fedoss.ru/public>
+FcgidWrapper /usr/local/apache2/htdocs/bj.fedoss.ru/public/php-wrapper .php
+</Directory>
+</VirtualHost>
+
+##############################################################################
+
+<VirtualHost *:80>
+DocumentRoot "/usr/local/apache2/htdocs/"
+ServerName fedoss.ru
+<Directory /usr/local/apache2/htdocs/>
+Require ip 127.0.0.1 109.252.75.138
+</Directory>
+</VirtualHost>
+
+##############################################################################
+
