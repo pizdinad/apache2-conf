@@ -227,14 +227,3 @@ FcgidWrapper /usr/local/apache2/htdocs/bj.fedoss.ru/public/php-wrapper .php
 </VirtualHost>
 
 ##############################################################################
-
-<VirtualHost *:80>
-DocumentRoot "/usr/local/apache2/htdocs/"
-ServerName fedoss.ru
-<Directory /usr/local/apache2/htdocs/>
-Require ip 127.0.0.1 109.252.75.138
-</Directory>
-</VirtualHost>
-
-##############################################################################
-
